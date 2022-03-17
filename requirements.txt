@@ -1,0 +1,6 @@
+pyfiglet
+urllib3
+simple_colors
+colorama
+requests
+beautifulsoup4
