@@ -17,7 +17,7 @@ n_accs = 0
 proxy = ""
 proxylist = None
 semaphore = Semaphore(1)
-output_file = f"output-{time.strftime('%d-%m-%y--%H-%M')}.txt"
+output_file = f"./results/output-{time.strftime('%d-%m-%y--%H-%M')}.txt"
 
 print(blue(pyfiglet.figlet_format("WindScribe Gen", font = "slant" ) + "\t\t\tgithub.com/kaliendo\n", 'bold'))
 
