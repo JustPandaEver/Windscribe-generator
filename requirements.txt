@@ -4,3 +4,4 @@ simple_colors
 colorama
 requests
 beautifulsoup4
+lxml
