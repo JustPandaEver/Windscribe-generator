@@ -1,4 +1,4 @@
-import random, base64, string, requests, pytesseract, io, os
+import random, base64, string, requests, pytesseract, io, os, webbrowser, tempfile
 from PIL import Image
 from colorama import init, Fore
 
@@ -11,7 +11,7 @@ def generate_username():
     username_length = random.randint(4, 7)
     return 'PandaEver' + ''.join(random.choices(string.ascii_letters + string.digits, k=username_length))
 
-def image_to_text(base64_string):
+def to_text(base64_string):
     try:
         base64_data = base64_string.split(',')[1]
         img_bytes = base64.b64decode(base64_data)
@@ -22,6 +22,21 @@ def image_to_text(base64_string):
         print(f"Error processing base64 image: {e}")
         return None
 
+def display(base64_string):
+    try:
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.html') as f:
+            html_content = f"""
+            <html>
+            <body>
+                <img src="{base64_string}">
+            </body>
+            </html>
+            """
+            f.write(html_content)
+            temp_filename = f.name
+        webbrowser.open('file://' + os.path.realpath(temp_filename))
+    except Exception as e:
+        print(f"Error opening base64 image in browser: {e}")
 
 def regist():
     username = generate_username()
@@ -69,14 +84,20 @@ def regist():
             if captcha_response.status_code == 200:
                 base64_i = base64.b64encode(captcha_response.content)
                 base64_image = f'data:image/png;base64,{base64_i.decode('utf-8')}'
-                payload["captcha"] = image_to_text(base64_image)
+                payload["captcha"] = to_text(base64_image)
+                if payload["captcha"] == "":
+                    display(base64_image)
+                    payload["captcha"] = input("Failed Solve, captcha code? ")
                 final_response = c.post(signup_url, data=payload, headers=headers)
-                if final_response.status_code == 200:
-                    registered = final_response.json()["data"]['username']
-                    if(username == registered):
-                        with open("windscribe.txt","a+") as f:
-                            f.write(f"{registered}|PandaEverX1337\n")
-                        print(f"Registration successful.")
+                if("captcha" in final_response.text):
+                    display(base64_image)
+                    payload["captcha"] = input("Failed Solve, captcha code? ")
+                final_response = c.post(signup_url, data=payload, headers=headers)
+                registered = final_response.json()["data"]['username']
+                if(username == registered):
+                    with open("windscribe.txt","a+") as f:
+                        f.write(f"{registered}|PandaEverX1337\n")
+                    print(f"Registration successful.")
             else:
                 print("Failed to fetch the captcha image.")
         else:
@@ -85,6 +106,6 @@ def regist():
         print(f"An error occurred: {e}")
 n = 0
 i = input("how many account? ")
-while n > i:
+while n < int(i):
     regist()
     n += 1
