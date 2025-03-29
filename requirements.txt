@@ -2,3 +2,4 @@ colorama
 requests
 pytesseract
 io
+Pillow
