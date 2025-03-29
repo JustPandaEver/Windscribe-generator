@@ -1,4 +1,4 @@
-import random, base64, string, requests, pytesseract, io, os, webbrowser, tempfile
+import random, base64, string, requests, pytesseract, io, os, webbrowser, tempfile, time
 from PIL import Image
 from colorama import init, Fore
 
@@ -78,6 +78,10 @@ def regist():
     try:
         response = c.post(signup_url, data=payload, headers=headers)
         response_data = response.json()
+        if response_data.get("errorCode") == 707:
+            print(response_data["errorMessage"]+"\nSleep 30 seconds")
+            time.sleep(30)
+            return
         if response_data.get("errorCode") == 909:
             captcha_url = f"https://windscribe.com{response_data['captcha']}"
             captcha_response = c.get(captcha_url, headers=headers)
@@ -88,12 +92,16 @@ def regist():
                 if payload["captcha"] == "":
                     display(base64_image)
                     payload["captcha"] = input("Failed Solve, captcha code? ")
-                final_response = c.post(signup_url, data=payload, headers=headers)
-                if("captcha" in final_response.text):
+                final_response = c.post(signup_url, data=payload, headers=headers).json()
+                if final_response.get("errorCode") == 909:
                     display(base64_image)
                     payload["captcha"] = input("Failed Solve, captcha code? ")
-                final_response = c.post(signup_url, data=payload, headers=headers)
-                registered = final_response.json()["data"]['username']
+                final_response = c.post(signup_url, data=payload, headers=headers).json()
+                if final_response.get("errorCode") == 707:
+                    print(final_response["errorMessage"]+"\nSleep 30 seconds")
+                    time.sleep(30)
+                    return
+                registered = final_response["data"]['username']
                 if(username == registered):
                     with open("windscribe.txt","a+") as f:
                         f.write(f"{registered}|PandaEverX1337\n")
