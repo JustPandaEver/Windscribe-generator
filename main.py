@@ -1,15 +1,96 @@
-import random, base64, string, requests, pytesseract, io, os, webbrowser, tempfile, time
+import random, base64, string, requests, pytesseract, io, os, webbrowser, tempfile, time, imaplib, re
+import email
+from email.header import decode_header
+from datetime import datetime, timedelta
 from PIL import Image
 from colorama import init, Fore
 
 init(autoreset=True)
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+mail = "use ur mail@gmail.com"
+password = "uanp ewzy nezv bkyu"
+
+
 c = requests.session()
 os.system('cls' if os.name == 'nt' else 'clear')
 
 def generate_username():
     username_length = random.randint(4, 7)
     return 'PandaEver' + ''.join(random.choices(string.ascii_letters + string.digits, k=username_length))
+
+def generate_num():
+    return str(random.randint(1111, 999999))
+
+def login_mail(email_address, password):
+    emails = []
+    try:
+        mail = imaplib.IMAP4_SSL('imap.gmail.com')
+        mail.login(email_address, password) # Corrected login
+        mail.select('inbox')
+        one_minute_ago = datetime.now() - timedelta(minutes=1)
+        since_date = one_minute_ago.strftime('%d-%b-%Y')
+        status, messages = mail.search(
+            None, f'(SINCE "{since_date}" FROM "noreply@windscribe.com")'
+        )
+        if status == "OK":
+            for num in messages[0].split():
+                status, data = mail.fetch(num, '(RFC822)')
+                if status == "OK":
+                    for response_part in data:
+                        if isinstance(response_part, tuple):
+                            msg = email.message_from_bytes(response_part[1])
+                            email_dict = {
+                                "subject": "",
+                                "from": "",
+                                "to": "",
+                                "body": "",
+                            }
+
+                            subject, encoding = decode_header(msg["Subject"])[0]
+                            if isinstance(subject, bytes):
+                                subject = subject.decode(
+                                    encoding if encoding else "utf-8"
+                                )
+                            email_dict["subject"] = subject
+
+                            from_, encoding = decode_header(msg.get("From"))[0]
+                            if isinstance(from_, bytes):
+                                from_ = from_.decode(encoding if encoding else "utf-8")
+                            email_dict["from"] = from_
+
+                            to_, encoding = decode_header(msg.get("To"))[0]
+                            if isinstance(to_, bytes):
+                                to_ = to_.decode(encoding if encoding else "utf-8")
+                            email_dict["to"] = to_
+
+                            if msg.is_multipart():
+                                for part in msg.walk():
+                                    if part.get_content_type() == "text/plain":
+                                        body = part.get_payload(decode=True)
+                                        if body:
+                                            email_dict["body"] = body.decode()
+                                        break
+                            else:
+                                body = msg.get_payload(decode=True)
+                                if body:
+                                    email_dict["body"] = body.decode()
+                            emails.append(email_dict)
+        url_pattern = r'https://windscribe\.com/signup/confirmemail/[a-zA-Z0-9]+/[a-zA-Z0-9]+(?:\?ts=\d+)?'
+        match = re.search(url_pattern, emails[len(emails)-1]['body'])
+        if match:
+            extracted_url = match.group(0)
+            c.get(extracted_url)
+            print("Success Confirm Mail")
+        else:
+            print("URL not found.")
+        return
+    except imaplib.IMAP4.error as e: # Catch imap errors specifically.
+        print(f"IMAP Error retrieving emails: {e}")
+        return []
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        return []
+    
 
 def to_text(base64_string):
     try:
@@ -40,15 +121,17 @@ def display(base64_string):
 
 def regist():
     username = generate_username()
+    mails = f"{mail.lower().replace("@gmail.com","")}+{generate_num()}@gmail.com"
     print(f"{Fore.GREEN}Username: {Fore.CYAN}{username}")
     print(f"{Fore.GREEN}Password: {Fore.CYAN}PandaEverX1337")
+    print(f"{Fore.GREEN}Email: {Fore.CYAN}{mails}")
     signup_url = "https://windscribe.com/signup"
     payload = {
         "signup": "1",
         "username": username,
         "password": "PandaEverX1337",
         "password2": "PandaEverX1337",
-        "email": "",
+        "email": f"{mails}",
         "voucher_code": "",
         "captcha": "",
         "robert_status": "0",
@@ -105,7 +188,9 @@ def regist():
                 if(username == registered):
                     with open("windscribe.txt","a+") as f:
                         f.write(f"{registered}|PandaEverX1337\n")
-                    print(f"Registration successful.")
+                    print(f"Registration successful, Please Wait.")
+                    time.sleep(10)
+                    login_mail(mail, password)
             else:
                 print("Failed to fetch the captcha image.")
         else:
