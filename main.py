@@ -188,8 +188,8 @@ def regist():
                 if(username == registered):
                     with open("windscribe.txt","a+") as f:
                         f.write(f"{registered}|PandaEverX1337\n")
-                    print(f"Registration successful, Please Wait.")
-                    time.sleep(10)
+                    print(f"Registration successful, Please Wait 30 seconds.")
+                    time.sleep(30)
                     login_mail(mail, password)
             else:
                 print("Failed to fetch the captcha image.")
