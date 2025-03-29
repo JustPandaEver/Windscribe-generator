@@ -3,3 +3,5 @@ requests
 pytesseract
 io
 Pillow
+email
+imaplib
