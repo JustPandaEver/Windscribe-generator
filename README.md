@@ -11,6 +11,7 @@ Password: {password}
 Usage
 ---
 1. Install requirements by doing ```pip install -r requirements.txt```.
-2. Run ```main.py```.
+2. edit main.py on line 10 and 11 using ur gmail
+3. Run ```main.py```.
 
 It's recommended to use proxies if you plan to generate more than 3/4 accounts with the same IP address.
